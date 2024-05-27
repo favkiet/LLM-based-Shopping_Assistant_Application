@@ -109,7 +109,7 @@ class Retrieval:
         """
         This class is used to retrieve the index and query engine for the shopping assistant application
         """
-        
+
     def load_documents(self, path):
         # load documents
         df = pd.read_csv(path)
@@ -135,16 +135,20 @@ class Retrieval:
 
     def create_index(self, documents, embed_model):
         from llama_index.core import StorageContext
+
         # create client and a new collection
-        client = qdrant_client.QdrantClient(
-            location=":memory:"
-        )
+        client = qdrant_client.QdrantClient(host="127.0.0.1", port=6333)
 
         # set up ChromaVectorStore and load in data
-        vector_store = QdrantVectorStore(client=client, collection_name="test_collection_1")
+        vector_store = QdrantVectorStore(
+            client=client, collection_name="test_collection_1"
+        )
         storage_context = StorageContext.from_defaults(vector_store=vector_store)
         index = VectorStoreIndex.from_documents(
-            documents, storage_context=storage_context, show_progress=True, embed_model=embed_model
+            documents,
+            storage_context=storage_context,
+            show_progress=True,
+            embed_model=embed_model,
         )
         return index
 

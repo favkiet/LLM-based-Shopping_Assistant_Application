@@ -18,7 +18,7 @@ def tool_get_RAG():
     from llama_index.core.tools import QueryEngineTool
 
     retrieval = Retrieval()
-    documents = retrieval.load_documents("/home/namvn/workspace/LLMs/LLM_VietAI/LLM-based-Shopping_Assistant_Application/data/cellphone_v3.csv")
+    documents = retrieval.load_documents(r"C:\Users\ADMIN\LLMs\LLM-based-Shopping_Assistant_Application\data\cellphone_v3.csv")
     index = retrieval.create_index(documents,llamaindex_embed_model)
     query_engine = retrieval.create_query_engine(index, llamaindex_llm)
     tool = QueryEngineTool.from_defaults(
