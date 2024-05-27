@@ -6,7 +6,6 @@ import sys
 # logging.getLogger().addHandler(logging.StreamHandler(stream=sys.stdout))
 
 import phoenix as px
-from llama_index.vector_stores.milvus import MilvusVectorStore
 from IPython.display import Markdown, display
 import textwrap
 from llama_index.readers.file import CSVReader, PagedCSVReader
@@ -53,7 +52,8 @@ llama_index.core.set_global_handler("arize_phoenix")
 # nodes = node_parser.get_nodes_from_documents(documents)
 from llama_index.core.retrievers import VectorIndexAutoRetriever
 from llama_index.core.vector_stores.types import MetadataInfo, VectorStoreInfo
-
+from llama_index.vector_stores.qdrant import QdrantVectorStore
+import qdrant_client
 
 vector_store_info = VectorStoreInfo(
     content_info="Danh sách sản phẩm của cửa hàng cellphones",
@@ -131,19 +131,20 @@ class Retrieval:
                 },
             )
             documents.append(document)
+        return documents
 
     def create_index(self, documents, embed_model):
         from llama_index.core import StorageContext
-
-        vector_store = PineconeVectorStore(
-            pinecone_index=pinecone_index, namespace="text"
+        # create client and a new collection
+        client = qdrant_client.QdrantClient(
+            location=":memory:"
         )
+
+        # set up ChromaVectorStore and load in data
+        vector_store = QdrantVectorStore(client=client, collection_name="test_collection_1")
         storage_context = StorageContext.from_defaults(vector_store=vector_store)
         index = VectorStoreIndex.from_documents(
-            documents,
-            storage_context=storage_context,
-            show_progress=True,
-            embed_model=embed_model,
+            documents, storage_context=storage_context, show_progress=True, embed_model=embed_model
         )
         return index
 

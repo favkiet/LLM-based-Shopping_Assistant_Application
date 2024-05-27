@@ -1,19 +1,13 @@
 from langchain.agents import AgentExecutor
-from langchain_community.tools.tavily_search import TavilySearchResults
-from langchain_core.prompts import ChatPromptTemplate
-from langchain import hub
 from langchain.chains import LLMChain
 from langchain.agents import AgentExecutor, create_react_agent
-from langchain.memory import (
-    ConversationSummaryBufferMemory,
-    ConversationBufferWindowMemory,
-)
 from model import langchain_llm, llamaindex_embed_model, llamaindex_llm
 from langchain_core.prompts import PromptTemplate
 from retrieval import Retrieval
+from langchain.memory import ConversationSummaryBufferMemory, ConversationBufferWindowMemory
 
 # Construct the JSON agent
-from prompt import classify_prompt, react_prompt
+from prompt import classify_prompt, react_prompt_template
 
 classify_prompt = PromptTemplate.from_template(classify_prompt)
 chain = LLMChain(llm=langchain_llm, prompt=classify_prompt)
@@ -24,7 +18,8 @@ def tool_get_RAG():
     from llama_index.core.tools import QueryEngineTool
 
     retrieval = Retrieval()
-    index = retrieval.load_index(llamaindex_embed_model)
+    documents = retrieval.load_documents("/home/namvn/workspace/LLMs/LLM_VietAI/LLM-based-Shopping_Assistant_Application/data/cellphone_v3.csv")
+    index = retrieval.create_index(documents,llamaindex_embed_model)
     query_engine = retrieval.create_query_engine(index, llamaindex_llm)
     tool = QueryEngineTool.from_defaults(
         query_engine,
@@ -83,16 +78,16 @@ def handle_conversation_turn(user_input: str):
 tools = [tool_get_RAG()]
 
 
-def generate_agent(input):
-    user_prompt = handle_conversation_turn(input)
-    print(user_prompt)
+def generate_agent():
+    # user_prompt = handle_conversation_turn(input)
+    # print(user_prompt)
     react_prompt = PromptTemplate.from_template(
         """
                 Assistant is designed to be able to assist with a wide range of tasks, from answering simple questions to providing in-depth explanations and discussions on a wide range of topics. As a language model, Assistant is able to generate human-like text based on the input it receives, allowing it to engage in natural-sounding conversations and provide responses that are coherent and relevant to the topic at hand.
 
         Assistant is able to process and understand large amounts of text, and can use this knowledge to provide accurate and informative responses to a wide range of questions. Additionally, Assistant is able to generate its own text based on the input it receives, allowing it to engage in discussions and provide explanations and descriptions on a wide range of topics.
 
-        Overall, Assistant is a powerful tool that can {user_prompt}. 
+        Overall, Assistant is a powerful tool that can . 
 
 
         TOOLS:
@@ -109,7 +104,6 @@ def generate_agent(input):
         Action: the action to take, should be one of [{tool_names}]
         Action Input: the input to the action
         Observation: the result of the action
-        ... (this Thought/Action/Action Input/Observation can repeat TWICE!!!)
         ```
 
         When you have a response to say to the Human, or if you do not need to use a tool, you MUST use the format:
@@ -118,16 +112,16 @@ def generate_agent(input):
         Thought: Do I need to use a tool? No
         Final Answer: [your response here]
         ```
-        -Please ensure that the answers are as emotionally rich and detailed as possible. 
-        - Final Answer should respond in TRADITIONAL VIETNAMESE but Chain of thought steps and action steps are in English
-        - If there is a Final Answer, return the result
-        - Please try to use a three part structure to output the answer, and try to segment it according to the key points. The answer should be no less than 300 words!!!
+        
         Let's begin!
+
+        Previous conversation history:
+        {chat_history}
 
         New input: {input}
         {agent_scratchpad}
         """,
-        partial_variables={"user_prompt": user_prompt},
+        # partial_variables={"user_prompt": user_prompt},
     )
     # react_prompt.format(user_prompt=user_prompt)
 
@@ -142,24 +136,24 @@ def generate_agent(input):
         agent=agent,
         tools=tools,
         verbose=True,
-        # memory=ConversationBufferWindowMemory(
-        #     k=5, memory_key="chat_history", return_messages=True
-        # ),
+        memory=ConversationBufferWindowMemory(
+            k=5, memory_key="chat_history", return_messages=True
+        ),
         handle_parsing_errors=True,
     )
     return agent_executor
 
 
-def load_agent(input):
-    agent = generate_agent(input)
+def load_agent():
+    agent = generate_agent()
     return agent
 
 
 def handle_react_chat(agent, input):
-    # print(agent.memory.load_memory_variables({}))
+    print(agent.memory.load_memory_variables({}))
     return agent.invoke({"input": input})
 
 
 if __name__ == "__main__":
-    agent = load_agent("Giới thiệu cho tôi những mẫu điện thoại dưới 700k đáng xem")
+    agent = load_agent()
     print(handle_react_chat(agent, "Giới thiệu cho tôi những mẫu điện thoại dưới 700k đáng xem"))

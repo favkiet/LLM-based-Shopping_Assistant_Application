@@ -9,7 +9,7 @@ from llama_index.llms.langchain import LangChainLLM
 
 llamaindex_llm = LangChainLLM(llm=GoogleGenerativeAI(model="gemini-pro"))
 # define embedding function
-llamaindex_embed_model = HuggingFaceEmbedding(model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
+llamaindex_embed_model = HuggingFaceEmbedding(model_name="BAAI/bge-m3")
 
 
 langchain_llm = GoogleGenerativeAI(model="gemini-pro")
