@@ -95,6 +95,10 @@ def generate_agent():
             d. Payment: Take advantage of this prompt to facilitate the purchasing process, including handling payment information, order confirmations, and shipping details.
             e. Other: Use this prompt for queries that don't fit the previous categories, such as providing general support, providing account management support, or handling responses
 
+        Previous conversation history:
+        {chat_history}
+
+        
         TOOLS:
         ------
 
@@ -120,9 +124,6 @@ def generate_agent():
         
         Let's begin!
 
-        Previous conversation history:
-        {chat_history}
-
         New input: {input}
         {agent_scratchpad}
         """,
@@ -142,7 +143,7 @@ def generate_agent():
         tools=tools,
         verbose=True,
         memory=ConversationBufferWindowMemory(
-            k=5, memory_key="chat_history", return_messages=True
+            k=5, memory_key="chat_history"
         ),
         handle_parsing_errors=True,
     )
@@ -156,10 +157,10 @@ def load_agent():
 
 def handle_react_chat(agent, input):
     print(agent.memory.load_memory_variables({}))
-    return agent.invoke({"input": input})
+    return agent.invoke({"input": input,"chat_history":agent.memory.load_memory_variables({})["chat_history"]})
 
 
 if __name__ == "__main__":
     agent = load_agent()
-    print(handle_react_chat(agent, "Giới thiệu cho tôi những mẫu điện thoại dưới 700k đáng xem"))
-    print(handle_react_chat(agent, "Tai nghe nào ở trên có thời lượng pin lâu nhất"))
+    print(handle_react_chat(agent, "Giới thiệu cho tôi những mẫu tai nghe dưới 700k đáng xem"))
+    print(handle_react_chat(agent, "Giới thiệu cho tôi những mẫu tai nghe dưới 1000k đáng xem"))
