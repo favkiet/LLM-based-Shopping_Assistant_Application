@@ -32,12 +32,6 @@ from llama_index.core.node_parser import SentenceSplitter
 
 from llama_index.core.prompts import display_prompt_dict
 
-from pinecone import Pinecone
-from pinecone import ServerlessSpec
-
-pinecoin = Pinecone(api_key=PINECONE_API_KEY)
-
-pinecone_index = pinecoin.Index("shopping-assistant")
 from llama_index.vector_stores.pinecone import PineconeVectorStore
 
 from llama_index.core import StorageContext
@@ -139,25 +133,32 @@ class Retrieval:
         # create client and a new collection
         client = qdrant_client.QdrantClient(host="127.0.0.1", port=6333)
 
-        # set up ChromaVectorStore and load in data
-        vector_store = QdrantVectorStore(
-            client=client, collection_name="test_collection_1"
-        )
-        storage_context = StorageContext.from_defaults(vector_store=vector_store)
-        index = VectorStoreIndex.from_documents(
-            documents,
-            storage_context=storage_context,
-            show_progress=True,
-            embed_model=embed_model,
-        )
+        try:
+            status = client.get_collection("test_collection_1")
+            index = self.load_index(embed_model)
+        except:
+            # set up ChromaVectorStore and load in data
+            vector_store = QdrantVectorStore(
+                client=client, collection_name="test_collection_1"
+            )
+            storage_context = StorageContext.from_defaults(vector_store=vector_store)
+            index = VectorStoreIndex.from_documents(
+                documents,
+                storage_context=storage_context,
+                show_progress=True,
+                embed_model=embed_model,
+            )
         return index
 
     def load_index(self, embed_model):
-        vector_store = PineconeVectorStore(
-            pinecone_index=pinecone_index, namespace="text"
+        client = qdrant_client.QdrantClient(host="127.0.0.1", port=6333)
+        vector_store = QdrantVectorStore(
+            client=client, collection_name="test_collection_1"
         )
         index = VectorStoreIndex.from_vector_store(
-            vector_store=vector_store, show_progress=True, embed_model=embed_model
+            vector_store,
+            show_progress=True,
+            embed_model=embed_model,
         )
         return index
 
